@@ -32,12 +32,29 @@ with app.app_context():
 # some method to fetch video/proof of question given the question_id and date
 @app.route("/proof", methods=["GET"])
 def get_proof():
-    # get question_id and date from request
-    question_id = request.args.get("question_id")
-    date = request.args.get("date")
-    # fetch proof from local folder
-    proof_path = f"./vids/{date}/{question_id}.mp4"
-    return send_file(proof_path, mimetype="video/mp4")
+    try:
+        # get question_id from request
+        question_id = request.args.get("question_id")
+
+        if not question_id:
+            return jsonify({"error": "Question ID is required"}), 400
+
+        # Find the question in qna.json
+        question = next((q for q in qna["questions"] if q["id"] == question_id), None)
+
+        if not question or "proofLocation" not in question:
+            return jsonify({"error": "Video not found"}), 404
+
+        # Get the video path from the question
+        proof_path = f"./{question['proofLocation']}"
+
+        if not os.path.exists(proof_path):
+            return jsonify({"error": "Video file not found"}), 404
+
+        return send_file(proof_path, mimetype="video/mp4")
+    except Exception as e:
+        print(f"Error fetching video: {str(e)}")
+        return jsonify({"error": "Failed to fetch video"}), 500
 
 
 # some method to add question attempts to the db given the question_id, date, and attempt_count

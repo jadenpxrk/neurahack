@@ -5,24 +5,24 @@
       "questionType": "mcq",
       "question": "Who did you have lunch with today?",
       "options": ["Jeong", "Raymond", "Lindsay", "Ian"],
-      "correctAnswer": "Jeong",
+      "correctAnswer": "Raymond",
       "attempts": 0,
       "maxAttempts": 2,
       "hasTimeLimit": true,
-      "proofLocation": "proofs/lunch.mp4"
+      "proofLocation": "vids/raw/lunch-conversation.mp4"
     },
     {
       "id": "2",
       "questionType": "short",
       "question": "What were you talking about during your lunch?",
-      "sampleAnswer": "You were talking about the project Mnemos.",
+      "sampleAnswer": "I was talking about the project Mnemos.",
       "keyPoints": ["Project Mnemos", "Discussion points", "Meeting agenda"],
       "attempts": 0,
       "maxAttempts": 1,
       "minLength": 10,
       "maxLength": 300,
       "hasTimeLimit": true,
-      "proofLocation": "proofs/lunch-conversation.mp4"
+      "proofLocation": "vids/raw/lunch-conversation.mp4"
     },
     {
       "id": "3",
@@ -35,7 +35,7 @@
       "minLength": 10,
       "maxLength": 300,
       "hasTimeLimit": true,
-      "proofLocation": "proofs/raymond-conversation.mp4"
+      "proofLocation": "vids/raw/doctor.mp4"
     },
     {
       "id": "4",
@@ -46,7 +46,7 @@
       "attempts": 0,
       "maxAttempts": 2,
       "hasTimeLimit": true,
-      "proofLocation": "proofs/lottery.mp4"
+      "proofLocation": "vids/raw/lottery.mp4"
     }
   ]
 }

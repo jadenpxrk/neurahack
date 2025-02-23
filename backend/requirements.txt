@@ -1,5 +1,5 @@
 Flask
 flask-cors
-Werkzeug
-SQLAlchemy
-Flask-SQLAlchemy
+flask-sqlalchemy
+python-dotenv
+google-generativeai

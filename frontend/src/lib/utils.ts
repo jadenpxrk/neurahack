@@ -7,31 +7,42 @@ export function cn(...inputs: ClassValue[]) {
 }
 
 export function toEasternMidnight(date: Date): Date {
-  // Get Eastern date in 'yyyy-MM-dd' format
+  // Get Eastern date components
   const easternDateStr = formatInTimeZone(
     date,
     "America/New_York",
     "yyyy-MM-dd"
   );
-  // Extract year, month, and day
   const [year, month, day] = easternDateStr.split("-").map(Number);
 
-  // Create a dummy UTC date for the Eastern date (interpreted as midnight UTC)
-  const dummyUTC = new Date(Date.UTC(year, month - 1, day));
+  // Create date at midnight Eastern time
+  const easternDate = new Date();
+  easternDate.setFullYear(year, month - 1, day);
+  easternDate.setHours(0, 0, 0, 0);
 
-  // Get the Eastern timezone offset for this dummy date, e.g. "-05:00" or "-04:00"
-  const offsetStr = formatInTimeZone(dummyUTC, "America/New_York", "XXX");
-  // Parse offset (we use absolute values because Eastern is behind UTC)
-  const [offsetHourStr, offsetMinuteStr] = offsetStr.slice(1).split(":");
-  const offsetHours = parseInt(offsetHourStr, 10);
-  const offsetMinutes = parseInt(offsetMinuteStr, 10);
+  // Convert to UTC for storage
+  const utcTimestamp = formatInTimeZone(
+    easternDate,
+    "America/New_York",
+    "yyyy-MM-dd'T'HH:mm:ssXXX"
+  );
 
-  // Eastern midnight in UTC is the dummy date plus the offset hours and minutes
-  return new Date(Date.UTC(year, month - 1, day, offsetHours, offsetMinutes));
+  return new Date(utcTimestamp);
 }
+import { format, toZonedTime } from "date-fns-tz";
 
-export function formatEasternDate(date: Date): string {
-  return formatInTimeZone(date, "America/New_York", "MMMM d, yyyy");
+import { parseISO } from "date-fns";
+
+export function formatEasternDate(
+  dateStr: string,
+  timeZone: string = "EST"
+): string {
+  // Parse the ISO date string (assumed to be in yyyy-mm-dd format)
+  const date = parseISO(dateStr);
+  // Convert the parsed date to the desired timezone
+  const zonedDate = toZonedTime(date, timeZone);
+  // Format the zoned date into the desired string format "MMM, dd, yyyy"
+  return format(zonedDate, "MMM dd, yyyy", { timeZone });
 }
 
 export function isDateDisabled(date: Date): boolean {

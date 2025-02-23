@@ -7,9 +7,9 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import React, { useEffect, useState } from "react";
 
 import { Button } from "@/components/ui/button";
-import React from "react";
 
 interface ProofCardProps {
   question: Question;
@@ -26,6 +26,39 @@ export const ProofCard: React.FC<ProofCardProps> = ({
   isLast,
   onNext,
 }) => {
+  const [videoUrl, setVideoUrl] = useState<string>("");
+  const [error, setError] = useState<string>("");
+
+  useEffect(() => {
+    const fetchVideo = async () => {
+      try {
+        const response = await fetch(`/api/proof?question_id=${question.id}`, {
+          method: "GET",
+        });
+
+        if (!response.ok) {
+          throw new Error("Failed to fetch video");
+        }
+
+        const blob = await response.blob();
+        const url = URL.createObjectURL(blob);
+        setVideoUrl(url);
+      } catch (err) {
+        setError("Failed to load proof video");
+        console.error("Error fetching video:", err);
+      }
+    };
+
+    fetchVideo();
+
+    // Cleanup function to revoke the URL when component unmounts
+    return () => {
+      if (videoUrl) {
+        URL.revokeObjectURL(videoUrl);
+      }
+    };
+  }, [question.id]);
+
   const isCorrect =
     question.questionType === "mcq"
       ? answer?.isCorrect
@@ -70,9 +103,26 @@ export const ProofCard: React.FC<ProofCardProps> = ({
           </Alert>
         )}
 
-        <div className="bg-slate-50 p-4 rounded-lg">
-          <h3 className="font-semibold mb-2">Proof Location</h3>
-          <p className="text-sm text-slate-600">{question.proofLocation}</p>
+        <div className="space-y-4">
+          <h3 className="font-semibold">Video Proof</h3>
+          {error ? (
+            <Alert variant="destructive">
+              <AlertDescription>{error}</AlertDescription>
+            </Alert>
+          ) : videoUrl ? (
+            <video
+              controls
+              className="w-full rounded-lg"
+              controlsList="nodownload"
+            >
+              <source src={videoUrl} type="video/mp4" />
+              Your browser does not support the video tag.
+            </video>
+          ) : (
+            <div className="h-48 bg-slate-100 rounded-lg flex items-center justify-center">
+              <p className="text-slate-500">Loading video...</p>
+            </div>
+          )}
         </div>
 
         <div className="flex justify-end mt-6">

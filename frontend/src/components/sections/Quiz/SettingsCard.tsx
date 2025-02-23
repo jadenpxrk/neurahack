@@ -73,7 +73,7 @@ export const SettingsCard: React.FC<SettingsCardProps> = ({
     resolver: zodResolver(formSchema),
     defaultValues: {
       ...settings,
-      testDate: toEasternMidnight(settings.testDate || new Date()),
+      testDate: settings.testDate || new Date(),
     },
   });
 
@@ -82,7 +82,7 @@ export const SettingsCard: React.FC<SettingsCardProps> = ({
   const onSubmit = (data: FormData) => {
     const normalizedData = {
       ...data,
-      testDate: toEasternMidnight(data.testDate),
+      testDate: data.testDate,
     };
     onStartQuiz(normalizedData);
   };
@@ -120,7 +120,7 @@ export const SettingsCard: React.FC<SettingsCardProps> = ({
                           )}
                         >
                           {field.value ? (
-                            formatEasternDate(field.value)
+                            formatEasternDate(field.value.toISOString())
                           ) : (
                             <span>Pick a date</span>
                           )}
@@ -132,7 +132,12 @@ export const SettingsCard: React.FC<SettingsCardProps> = ({
                       <Calendar
                         mode="single"
                         selected={field.value}
-                        onSelect={field.onChange}
+                        onSelect={(date) => {
+                          if (date) {
+                            const easternMidnight = toEasternMidnight(date);
+                            field.onChange(easternMidnight);
+                          }
+                        }}
                         disabled={isDateDisabled}
                         initialFocus
                       />

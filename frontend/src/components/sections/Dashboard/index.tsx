@@ -171,9 +171,7 @@ export default function Dashboard() {
                   <LineChart
                     data={quizData.map((quiz) => ({
                       timestamp: quiz.timestamp,
-                      formattedDate: formatEasternDate(
-                        new Date(quiz.timestamp)
-                      ),
+                      formattedDate: formatEasternDate(quiz.timestamp),
                       averageScore: Math.round(
                         (quiz.mcqScore + quiz.shortAnswerScore) / 2
                       ),
@@ -234,7 +232,7 @@ export default function Dashboard() {
               <LineChart
                 data={quizData.map((quiz) => ({
                   ...quiz,
-                  formattedDate: formatEasternDate(new Date(quiz.timestamp)),
+                  formattedDate: formatEasternDate(quiz.timestamp),
                 }))}
                 margin={{ top: 5, right: 20, bottom: 25, left: 0 }}
               >
