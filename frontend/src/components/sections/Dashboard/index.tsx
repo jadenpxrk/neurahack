@@ -1,7 +1,18 @@
 "use client";
 
 // Dashboard showing quiz results and progress
-// Can use shadcn charts for this
+// each day has a quiz
+// should show the quiz results for each day
+// should show the progress over time
+// specifically, each day should have
+// - mcq score --> after all attempts
+// - mcq score --> only first attempts for each question
+// - short answer score --> there is only one attempt per question
+// - how long it took to get correct answer for mcq
+// - how long it took to submit an answer for short answer
+// - how many attempts it took to get correct answer for mcq
+// what does this say about the patient
+// - insights
 
 import {
   Card,

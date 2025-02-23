@@ -1,5 +1,4 @@
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import type { Answer, Question } from "@/models/quiz";
 import {
   Card,
   CardContent,
@@ -7,6 +6,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import type { MCQQuestion, Question } from "@/models/quiz";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 
 import { Button } from "@/components/ui/button";
@@ -16,14 +16,20 @@ import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
 
 interface QuestionCardProps {
-  question: Question;
-  answer?: Answer;
   currentIndex: number;
   total: number;
   timeLeft: number;
+  question: Question;
+  currentAnswer?: Answer;
   onMCQAnswer: (id: string, value: string) => void;
   onShortAnswer: (id: string, value: string) => void;
   onSubmit: () => void;
+}
+
+interface Answer {
+  answer: string;
+  isCorrect?: boolean;
+  submitted?: boolean;
 }
 
 const TimerCircle: React.FC<{ timeLeft: number; totalTime: number }> = ({
@@ -84,25 +90,46 @@ const TimerCircle: React.FC<{ timeLeft: number; totalTime: number }> = ({
 };
 
 export const QuestionCard: React.FC<QuestionCardProps> = ({
-  question,
-  answer,
   currentIndex,
   total,
   timeLeft,
+  question,
+  currentAnswer,
   onMCQAnswer,
   onShortAnswer,
   onSubmit,
 }) => {
-  const attemptsLeft = question.maxAttempts - question.attempts;
-  const isDisabled = attemptsLeft <= 0 || answer?.isCorrect === true;
-  const hasAnswer = answer?.answer && answer.answer !== "NO_ANSWER";
+  const handleAnswerChange = (questionId: string, value: string) => {
+    if (question.questionType === "mcq") {
+      onMCQAnswer(questionId, value);
+    } else {
+      onShortAnswer(questionId, value);
+    }
+  };
+
+  const maxAttempts =
+    question.maxAttempts ?? (question.questionType === "mcq" ? 2 : 1);
+  const attemptsLeft =
+    maxAttempts === Infinity
+      ? "unlimited"
+      : maxAttempts - (question.attempts || 0);
+  const isDisabled =
+    (typeof attemptsLeft === "number" && attemptsLeft <= 0) ||
+    currentAnswer?.isCorrect === true;
+  const hasAnswer =
+    currentAnswer?.answer && currentAnswer.answer !== "NO_ANSWER";
+
+  const minLength = 50;
+  const maxLength = 300;
+
+  const isMCQ = question.questionType === "mcq" && "options" in question;
 
   return (
     <div className="space-y-4">
-      {question.hasTimeLimit && (
+      {question.hasTimeLimit && timeLeft > 0 && (
         <TimerCircle
           timeLeft={timeLeft}
-          totalTime={question.type === "mcq" ? 10 : 30}
+          totalTime={question.questionType === "mcq" ? 10 : 30}
         />
       )}
       <Card key={question.id}>
@@ -114,7 +141,7 @@ export const QuestionCard: React.FC<QuestionCardProps> = ({
             <CardTitle className="text-xl mt-4">{question.question}</CardTitle>
           </div>
           <CardDescription>
-            {question.maxAttempts === Infinity
+            {attemptsLeft === "unlimited"
               ? "Unlimited attempts"
               : `${attemptsLeft} ${
                   attemptsLeft === 1 ? "attempt" : "attempts"
@@ -122,53 +149,68 @@ export const QuestionCard: React.FC<QuestionCardProps> = ({
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
-          {question.type === "mcq" ? (
+          {isMCQ ? (
             <>
               <RadioGroup
                 disabled={isDisabled}
-                value={answer?.answer}
+                value={currentAnswer?.answer || ""}
                 onValueChange={(value: string) =>
-                  onMCQAnswer(question.id, value)
+                  handleAnswerChange(question.id, value)
                 }
+                className="space-y-2"
               >
-                {question.options?.map((option) => (
-                  <div key={option} className="flex items-center space-x-2">
+                {(question as MCQQuestion).options.map((option) => (
+                  <div key={option} className="flex items-center space-x-2 p-2">
                     <RadioGroupItem
                       value={option}
                       id={`${question.id}-${option}`}
                     />
-                    <Label htmlFor={`${question.id}-${option}`}>{option}</Label>
+                    <Label
+                      className="cursor-pointer flex-grow"
+                      htmlFor={`${question.id}-${option}`}
+                    >
+                      {option}
+                    </Label>
                   </div>
                 ))}
               </RadioGroup>
-              {answer?.isCorrect && (
-                <Button className="w-full" onClick={onSubmit}>
-                  Submit Answer
-                </Button>
-              )}
+              {currentAnswer?.answer &&
+                !currentAnswer.isCorrect &&
+                !currentAnswer.submitted && (
+                  <Button className="w-full mt-4" onClick={onSubmit}>
+                    Submit Answer
+                  </Button>
+                )}
             </>
           ) : (
             <div>
               <Textarea
                 disabled={isDisabled}
                 placeholder="Type your answer here..."
-                value={answer?.answer || ""}
-                onChange={(e) => onShortAnswer(question.id, e.target.value)}
+                value={currentAnswer?.answer || ""}
+                onChange={(e) =>
+                  handleAnswerChange(question.id, e.target.value)
+                }
+                minLength={minLength}
+                maxLength={maxLength}
+                className="min-h-[150px]"
               />
               <div className="mt-2 text-sm space-y-1">
                 <div className="text-slate-600">
-                  {`${question.minLength}-${question.maxLength} characters required`}
+                  {`${minLength}-${maxLength} characters required`}
                 </div>
                 <div
                   className={cn(
-                    answer?.answer &&
-                      (answer.answer.length < question.minLength ||
-                        answer.answer.length > question.maxLength)
+                    currentAnswer?.answer &&
+                      (currentAnswer.answer.length < minLength ||
+                        currentAnswer.answer.length > maxLength)
                       ? "text-red-600"
                       : "text-slate-600"
                   )}
                 >
-                  {`Current length: ${answer?.answer?.length || 0} characters`}
+                  {`Current length: ${
+                    currentAnswer?.answer?.length || 0
+                  } characters`}
                 </div>
               </div>
               <Button
@@ -176,9 +218,9 @@ export const QuestionCard: React.FC<QuestionCardProps> = ({
                 onClick={onSubmit}
                 disabled={
                   isDisabled ||
-                  !answer?.answer ||
-                  answer.answer.length < question.minLength ||
-                  answer.answer.length > question.maxLength
+                  !currentAnswer?.answer ||
+                  currentAnswer.answer.length < minLength ||
+                  currentAnswer.answer.length > maxLength
                 }
               >
                 Submit Answer
@@ -188,26 +230,19 @@ export const QuestionCard: React.FC<QuestionCardProps> = ({
         </CardContent>
       </Card>
 
-      {hasAnswer && question.type === "mcq" && (
-        <Alert
-          className={
-            answer?.isCorrect
-              ? "bg-green-50 border-green-200"
-              : "bg-red-50 border-red-200"
-          }
-        >
-          <AlertTitle>
-            {answer?.isCorrect ? "Correct!" : "Incorrect"}
-          </AlertTitle>
-          <AlertDescription>
-            {answer?.isCorrect
-              ? "Great job! That's the right answer."
-              : `That's not quite right. You have ${attemptsLeft} ${
-                  attemptsLeft === 1 ? "attempt" : "attempts"
-                } remaining.`}
-          </AlertDescription>
-        </Alert>
-      )}
+      {hasAnswer &&
+        question.questionType === "mcq" &&
+        currentAnswer?.isCorrect === false &&
+        currentAnswer?.submitted && (
+          <Alert className="bg-red-50 border-red-200">
+            <AlertTitle>Incorrect</AlertTitle>
+            <AlertDescription>
+              That&apos;s not quite right. You have{" "}
+              {attemptsLeft === "unlimited" ? "unlimited" : attemptsLeft}{" "}
+              {attemptsLeft === 1 ? "attempt" : "attempts"} remaining.
+            </AlertDescription>
+          </Alert>
+        )}
     </div>
   );
 };

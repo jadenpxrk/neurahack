@@ -1,6 +1,6 @@
 "use client";
 
-import Quiz from "@/components/sections/Quiz/indexx";
+import Quiz from "@/components/sections/Quiz";
 import Start from "@/components/sections/Quiz/Start";
 import { useQuiz } from "@/contexts/QuizContext";
 import { useRouter } from "next/navigation";
@@ -22,18 +22,10 @@ export default function Home() {
     startQuiz();
   };
 
-  const handleCancel = () => {
-    setHasStarted(false);
-  };
-
   return (
     // header is 64px tall
     <section className="flex flex-col min-h-[calc(100vh-64px)] justify-center items-center">
-      {hasStarted ? (
-        <Quiz onCancel={handleCancel} />
-      ) : (
-        <Start onStart={handleStart} />
-      )}
+      {hasStarted ? <Quiz /> : <Start onStart={handleStart} />}
     </section>
   );
 }

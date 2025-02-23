@@ -1,0 +1,52 @@
+{
+  "questions": [
+    {
+      "id": "1",
+      "questionType": "mcq",
+      "question": "Who did you have lunch with today?",
+      "options": ["Ian", "Raymond", "Sarah", "Michael"],
+      "correctAnswer": "Ian",
+      "attempts": 0,
+      "maxAttempts": 2,
+      "hasTimeLimit": true,
+      "proofLocation": "proofs/lunch.mp4"
+    },
+    {
+      "id": "2",
+      "questionType": "short",
+      "question": "What were you talking about during your lunch?",
+      "sampleAnswer": "You were talking about the project Mnemos.",
+      "keyPoints": ["Project Mnemos", "Discussion points", "Meeting agenda"],
+      "attempts": 0,
+      "maxAttempts": 1,
+      "minLength": 50,
+      "maxLength": 300,
+      "hasTimeLimit": true,
+      "proofLocation": "proofs/lunch-conversation.mp4"
+    },
+    {
+      "id": "3",
+      "questionType": "short",
+      "question": "What was your friend Raymond talking about?",
+      "sampleAnswer": "Raymond was talking about how he is going to be a doctor.",
+      "keyPoints": ["Medical school", "Career plans", "Doctor"],
+      "attempts": 0,
+      "maxAttempts": 1,
+      "minLength": 50,
+      "maxLength": 300,
+      "hasTimeLimit": true,
+      "proofLocation": "proofs/raymond-conversation.mp4"
+    },
+    {
+      "id": "4",
+      "questionType": "mcq",
+      "question": "Who told you they won the lottery?",
+      "options": ["Ian", "Raymond", "Sarah", "Michael"],
+      "correctAnswer": "Ian",
+      "attempts": 0,
+      "maxAttempts": 2,
+      "hasTimeLimit": true,
+      "proofLocation": "proofs/lottery.mp4"
+    }
+  ]
+}
