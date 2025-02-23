@@ -1,3 +1,3 @@
-# The Neura Hack 2025
+# The NeuroHack 2025
 
 ## Mnemos
