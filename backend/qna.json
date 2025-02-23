@@ -41,7 +41,7 @@
       "id": "4",
       "questionType": "mcq",
       "question": "Who told you they won the lottery?",
-      "options": ["Raymond", "Raymond", "Ian", "Lindsay"],
+      "options": ["Raymond", "Jeong", "Ian", "Lindsay"],
       "correctAnswer": "Raymond",
       "attempts": 0,
       "maxAttempts": 2,

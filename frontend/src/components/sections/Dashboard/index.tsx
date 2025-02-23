@@ -342,11 +342,8 @@ export default function Dashboard() {
                 </div>
                 <p className="text-sm text-muted-foreground">
                   Your memory performance is in the top 15% for your age group
-                  (ages{" "}
-                  {Math.floor(quizData[quizData.length - 1].age / 10) * 10}-
-                  {Math.floor(quizData[quizData.length - 1].age / 10) * 10 + 9}
-                  ). This is based on average response time and accuracy
-                  compared to others in your age range.
+                  ages 20-30. This is based on average response time and
+                  accuracy compared to others in your age range.
                 </p>
               </li>
             </ul>

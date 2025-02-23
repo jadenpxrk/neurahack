@@ -41,7 +41,7 @@ export default function NavBar() {
           {/* Logo */}
           <div className="relative w-8 h-8">
             <Image
-              src="/placeholder-logo.png"
+              src="/MnemosLogo.png"
               alt="Logo"
               fill
               className="object-contain"
