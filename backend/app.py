@@ -103,6 +103,7 @@ def get_quiz_results():
             if result.day not in grouped_results:
                 grouped_results[result.day] = {
                     "mcqScores": [],
+                    "mcqFirstGuessScores": [],
                     "shortAnswerScores": [],
                     "timeTaken": [],
                     "attempts": [],
@@ -111,6 +112,9 @@ def get_quiz_results():
             # Add scores based on actual question type
             if question_types[result.question_id] == "mcq":
                 grouped_results[result.day]["mcqScores"].append(
+                    result.avg_overall_score or 0
+                )
+                grouped_results[result.day]["mcqFirstGuessScores"].append(
                     result.avg_first_guess_score or 0
                 )
             else:
@@ -128,6 +132,11 @@ def get_quiz_results():
                 "mcqScore": round(
                     sum(data["mcqScores"]) / len(data["mcqScores"])
                     if data["mcqScores"]
+                    else 0
+                ),
+                "mcqFirstGuessScore": round(
+                    sum(data["mcqFirstGuessScores"]) / len(data["mcqFirstGuessScores"])
+                    if data["mcqFirstGuessScores"]
                     else 0
                 ),
                 "shortAnswerScore": round(
@@ -167,7 +176,8 @@ def get_accuracy():
 
         prompt = f"""
         Task: Compare a user's answer to the correct answer and determine its accuracy on a scale of 0-100.
-        
+        Questions will test the user's recall of the memory, not how similar the sentence itself is.
+
         Correct Answer: {correct_answer}
         User's Answer: {user_answer}
         

@@ -20,6 +20,12 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
+import {
+  cn,
+  formatEasternDate,
+  isDateDisabled,
+  toEasternMidnight,
+} from "@/lib/utils";
 
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
@@ -27,8 +33,6 @@ import { CalendarIcon } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import React from "react";
 import { Switch } from "@/components/ui/switch";
-import { cn } from "@/lib/utils";
-import { format } from "date-fns";
 import { useForm } from "react-hook-form";
 import { useQuiz } from "@/contexts/QuizContext";
 import { useRouter } from "next/navigation";
@@ -40,6 +44,7 @@ interface QuizSettings {
   shortAnswerTimeLimit: number;
   unlimitedMCQAttempts: boolean;
   testDate: Date;
+  age: number;
 }
 
 interface SettingsCardProps {
@@ -53,6 +58,7 @@ const formSchema = z.object({
   shortAnswerTimeLimit: z.number().min(10).max(600),
   unlimitedMCQAttempts: z.boolean(),
   testDate: z.date(),
+  age: z.number().min(1).max(120),
 });
 
 type FormData = z.infer<typeof formSchema>;
@@ -67,14 +73,18 @@ export const SettingsCard: React.FC<SettingsCardProps> = ({
     resolver: zodResolver(formSchema),
     defaultValues: {
       ...settings,
-      testDate: settings.testDate || new Date(),
+      testDate: toEasternMidnight(settings.testDate || new Date()),
     },
   });
 
   const watchEnableTimer = form.watch("enableTimer");
 
   const onSubmit = (data: FormData) => {
-    onStartQuiz(data);
+    const normalizedData = {
+      ...data,
+      testDate: toEasternMidnight(data.testDate),
+    };
+    onStartQuiz(normalizedData);
   };
 
   const handleCancel = () => {
@@ -110,7 +120,7 @@ export const SettingsCard: React.FC<SettingsCardProps> = ({
                           )}
                         >
                           {field.value ? (
-                            format(field.value, "PPP")
+                            formatEasternDate(field.value)
                           ) : (
                             <span>Pick a date</span>
                           )}
@@ -123,15 +133,45 @@ export const SettingsCard: React.FC<SettingsCardProps> = ({
                         mode="single"
                         selected={field.value}
                         onSelect={field.onChange}
-                        disabled={(date) =>
-                          date > new Date(new Date().setHours(23, 59, 59, 999))
-                        }
+                        disabled={isDateDisabled}
                         initialFocus
                       />
                     </PopoverContent>
                   </Popover>
                   <FormDescription>
-                    Select the date you want to be tested on
+                    Select the date you want to be tested on (Eastern Time)
+                  </FormDescription>
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="age"
+              render={({
+                field,
+              }: {
+                field: { value: number; onChange: (value: number) => void };
+              }) => (
+                <FormItem>
+                  <FormLabel>Age</FormLabel>
+                  <FormControl>
+                    <Input
+                      type="number"
+                      value={field.value || ""}
+                      onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                        const value =
+                          e.target.value === "" ? 0 : parseInt(e.target.value);
+                        const clampedValue = isNaN(value)
+                          ? 1
+                          : Math.min(Math.max(value, 1), 120);
+                        field.onChange(clampedValue);
+                      }}
+                    />
+                  </FormControl>
+                  <FormDescription>
+                    Enter your age to compare your memory performance with
+                    others in your age group
                   </FormDescription>
                 </FormItem>
               )}

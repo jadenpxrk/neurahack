@@ -15,6 +15,7 @@ interface QuizSettings {
   shortAnswerTimeLimit: number;
   unlimitedMCQAttempts: boolean;
   testDate: Date;
+  age: number;
 }
 
 const DEFAULT_SETTINGS: QuizSettings = {
@@ -23,6 +24,7 @@ const DEFAULT_SETTINGS: QuizSettings = {
   shortAnswerTimeLimit: 30,
   unlimitedMCQAttempts: true,
   testDate: new Date(),
+  age: 25,
 };
 
 export default function Quiz() {
@@ -34,6 +36,9 @@ export default function Quiz() {
   const [questions, setQuestions] = useState<Question[]>([]);
   const [answers, setAnswers] = useState<Answer[]>([]);
   const [timeLeft, setTimeLeft] = useState<number>(0);
+  const [timePerQuestion, setTimePerQuestion] = useState<
+    Record<string, number>
+  >({});
   const timerRef = React.useRef<number | null>(null);
   const lastTickRef = React.useRef<number>(0);
   const answersRef = React.useRef(answers);
@@ -64,7 +69,16 @@ export default function Quiz() {
       setAnswers((prev) =>
         prev.map((a) =>
           a.questionId === currentQuestion.id
-            ? { ...a, isCorrect, submitted: true }
+            ? {
+                ...a,
+                isCorrect,
+                submitted: true,
+                timeTaken: timePerQuestion[currentQuestion.id] || 0,
+                firstAttemptCorrect:
+                  a.firstAttemptCorrect !== undefined
+                    ? a.firstAttemptCorrect
+                    : isCorrect,
+              }
             : a
         )
       );
@@ -124,7 +138,12 @@ export default function Quiz() {
     } else {
       setQuizState("proof");
     }
-  }, [currentQuestion, currentAnswer, settings.unlimitedMCQAttempts]);
+  }, [
+    currentQuestion,
+    currentAnswer,
+    settings.unlimitedMCQAttempts,
+    timePerQuestion,
+  ]);
 
   const handleMCQAnswer = useCallback(
     (questionId: string, answer: string) => {
@@ -183,7 +202,8 @@ export default function Quiz() {
     if (
       settings.enableTimer &&
       quizState === "question" &&
-      shouldResetTimer.current
+      shouldResetTimer.current &&
+      currentQuestion?.id
     ) {
       shouldResetTimer.current = false;
       const initialTime =
@@ -192,6 +212,10 @@ export default function Quiz() {
           : settings.shortAnswerTimeLimit;
 
       setTimeLeft(initialTime);
+      setTimePerQuestion((prev) => ({
+        ...prev,
+        [currentQuestion.id]: 0,
+      }));
       lastTickRef.current = Date.now();
     }
   }, [
@@ -201,6 +225,7 @@ export default function Quiz() {
     settings.mcqTimeLimit,
     settings.shortAnswerTimeLimit,
     currentQuestion?.questionType,
+    currentQuestion?.id,
   ]);
 
   // Handle timer countdown using requestAnimationFrame
@@ -211,7 +236,7 @@ export default function Quiz() {
       const now = Date.now();
       const delta = now - lastTickRef.current;
 
-      if (delta >= 1000) {
+      if (delta >= 1000 && currentQuestion?.id) {
         lastTickRef.current = now;
         setTimeLeft((prevTime) => {
           if (prevTime <= 1) {
@@ -220,6 +245,10 @@ export default function Quiz() {
           }
           return prevTime - 1;
         });
+        setTimePerQuestion((prev) => ({
+          ...prev,
+          [currentQuestion.id]: (prev[currentQuestion.id] || 0) + 1,
+        }));
       }
 
       if (timeLeft > 0) {
@@ -238,7 +267,13 @@ export default function Quiz() {
         }
       };
     }
-  }, [settings.enableTimer, quizState, timeLeft, timerCallback]);
+  }, [
+    settings.enableTimer,
+    quizState,
+    timeLeft,
+    timerCallback,
+    currentQuestion?.id,
+  ]);
 
   const handleNext = () => {
     if (isLastQuestion) {
@@ -252,15 +287,13 @@ export default function Quiz() {
             const data = {
               question_id: parseInt(question.id),
               date: settings.testDate.toISOString().split("T")[0],
-              attempt_count: question.attempts || 0,
+              attempt_count: Math.max(1, question.attempts || 1),
               time_taken: settings.enableTimer
-                ? (question.questionType === "mcq"
-                    ? settings.mcqTimeLimit
-                    : settings.shortAnswerTimeLimit) - (timeLeft || 0)
+                ? timePerQuestion[question.id] || 0
                 : null,
               first_guess_score:
                 question.questionType === "mcq"
-                  ? answer.isCorrect
+                  ? answer.firstAttemptCorrect
                     ? 100
                     : 0
                   : answer.score,

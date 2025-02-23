@@ -28,4 +28,7 @@ export interface Answer {
   answer: string;
   isCorrect?: boolean;
   score?: number;
+  submitted?: boolean;
+  firstAttemptCorrect?: boolean;
+  timeTaken?: number;
 }

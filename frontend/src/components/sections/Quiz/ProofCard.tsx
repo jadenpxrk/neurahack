@@ -29,7 +29,7 @@ export const ProofCard: React.FC<ProofCardProps> = ({
   const isCorrect =
     question.questionType === "mcq"
       ? answer?.isCorrect
-      : answer?.score && answer.score > 0.8;
+      : answer?.score && answer.score > 80;
 
   const answerAlertClass = isCorrect
     ? "bg-green-50 border-green-200"
