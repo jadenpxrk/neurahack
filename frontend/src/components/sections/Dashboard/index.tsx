@@ -29,34 +29,15 @@ import {
   ChartTooltipContent,
 } from "@/components/ui/chart";
 import { Line, LineChart } from "recharts";
+import { useEffect, useState } from "react";
 
-// This would come from your backend/database
-const mockQuizData = [
-  {
-    quizNumber: 1,
-    mcqScore: 85,
-    shortAnswerScore: 70,
-    timestamp: "2024-03-01",
-  },
-  {
-    quizNumber: 2,
-    mcqScore: 90,
-    shortAnswerScore: 75,
-    timestamp: "2024-03-08",
-  },
-  {
-    quizNumber: 3,
-    mcqScore: 95,
-    shortAnswerScore: 85,
-    timestamp: "2024-03-15",
-  },
-  {
-    quizNumber: 4,
-    mcqScore: 100,
-    shortAnswerScore: 90,
-    timestamp: "2024-03-22",
-  },
-];
+interface QuizResult {
+  timestamp: string;
+  mcqScore: number;
+  shortAnswerScore: number;
+  avgTimeTaken: number;
+  avgAttempts: number;
+}
 
 const chartConfig = {
   mcqScore: {
@@ -70,6 +51,47 @@ const chartConfig = {
 };
 
 export default function Dashboard() {
+  const [quizData, setQuizData] = useState<QuizResult[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const fetchResults = async () => {
+      try {
+        const response = await fetch("/api/results");
+        if (!response.ok) throw new Error("Failed to fetch results");
+        const data = await response.json();
+        setQuizData(
+          data.sort(
+            (a: QuizResult, b: QuizResult) =>
+              new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime()
+          )
+        );
+      } catch (err) {
+        setError(
+          err instanceof Error ? err.message : "Failed to load quiz results"
+        );
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchResults();
+  }, []);
+
+  if (loading) return <div>Loading...</div>;
+  if (error) return <div>Error: {error}</div>;
+  if (quizData.length === 0) return <div>No quiz data available</div>;
+
+  const latestQuiz = quizData[quizData.length - 1];
+  const averageScore = Math.round(
+    quizData.reduce(
+      (acc, curr) => acc + curr.mcqScore + curr.shortAnswerScore,
+      0
+    ) /
+      (quizData.length * 2)
+  );
+
   return (
     <div className="container mx-auto p-6 space-y-8">
       <h1 className="text-3xl font-bold mb-8">Your Learning Progress</h1>
@@ -79,28 +101,20 @@ export default function Dashboard() {
           <CardHeader>
             <CardTitle>Latest Quiz Performance</CardTitle>
             <CardDescription>
-              Your most recent quiz score:{" "}
-              {mockQuizData[mockQuizData.length - 1].mcqScore}% MCQ,{" "}
-              {mockQuizData[mockQuizData.length - 1].shortAnswerScore}% Short
-              Answer
+              Your most recent quiz score: {latestQuiz.mcqScore}% MCQ,{" "}
+              {latestQuiz.shortAnswerScore}% Short Answer
             </CardDescription>
           </CardHeader>
+          <CardContent>
+            <p>Average time taken: {latestQuiz.avgTimeTaken} seconds</p>
+            <p>Average attempts per question: {latestQuiz.avgAttempts}</p>
+          </CardContent>
         </Card>
 
         <Card>
           <CardHeader>
             <CardTitle>Overall Progress</CardTitle>
-            <CardDescription>
-              Average Score:{" "}
-              {Math.round(
-                mockQuizData.reduce(
-                  (acc, curr) => acc + curr.mcqScore + curr.shortAnswerScore,
-                  0
-                ) /
-                  (mockQuizData.length * 2)
-              )}
-              %
-            </CardDescription>
+            <CardDescription>Average Score: {averageScore}%</CardDescription>
           </CardHeader>
         </Card>
       </div>
@@ -112,7 +126,7 @@ export default function Dashboard() {
         </CardHeader>
         <CardContent>
           <ChartContainer config={chartConfig} className="min-h-[400px] w-full">
-            <LineChart data={mockQuizData}>
+            <LineChart data={quizData}>
               <Line
                 dataKey="mcqScore"
                 fill="var(--color-mcqScore)"
@@ -155,22 +169,31 @@ export default function Dashboard() {
                 style={{ backgroundColor: "var(--color-mcqScore)" }}
               ></span>
               <span>
-                Your MCQ performance has improved by{" "}
-                {mockQuizData[mockQuizData.length - 1].mcqScore -
-                  mockQuizData[0].mcqScore}
-                % since you started
+                MCQ Score Change: {latestQuiz.mcqScore - quizData[0].mcqScore}%
+                since start
               </span>
             </li>
             <li className="flex items-center gap-2">
               <span
-                className="h-2 w-2 rounded-full bg-green-500"
+                className="h-2 w-2 rounded-full"
                 style={{ backgroundColor: "var(--color-shortAnswerScore)" }}
               ></span>
-              <span>Short answer responses show consistent improvement</span>
+              <span>
+                Short Answer Score Change:{" "}
+                {latestQuiz.shortAnswerScore - quizData[0].shortAnswerScore}%
+                since start
+              </span>
             </li>
             <li className="flex items-center gap-2">
               <span className="h-2 w-2 rounded-full bg-purple-600"></span>
-              <span>You&apos;re performing better than 75% of your peers</span>
+              <span>
+                Average completion time:{" "}
+                {Math.round(
+                  quizData.reduce((acc, curr) => acc + curr.avgTimeTaken, 0) /
+                    quizData.length
+                )}{" "}
+                seconds
+              </span>
             </li>
           </ul>
         </CardContent>

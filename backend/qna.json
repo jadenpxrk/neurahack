@@ -19,7 +19,7 @@
       "keyPoints": ["Project Mnemos", "Discussion points", "Meeting agenda"],
       "attempts": 0,
       "maxAttempts": 1,
-      "minLength": 50,
+      "minLength": 10,
       "maxLength": 300,
       "hasTimeLimit": true,
       "proofLocation": "proofs/lunch-conversation.mp4"
@@ -32,7 +32,7 @@
       "keyPoints": ["Medical school", "Career plans", "Doctor"],
       "attempts": 0,
       "maxAttempts": 1,
-      "minLength": 50,
+      "minLength": 10,
       "maxLength": 300,
       "hasTimeLimit": true,
       "proofLocation": "proofs/raymond-conversation.mp4"

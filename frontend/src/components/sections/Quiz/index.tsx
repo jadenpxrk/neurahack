@@ -50,7 +50,7 @@ export default function Quiz() {
   );
   const isLastQuestion = currentQuestionIndex === questions.length - 1;
 
-  const handleSubmit = useCallback(() => {
+  const handleSubmit = useCallback(async () => {
     if (timerRef.current) {
       cancelAnimationFrame(timerRef.current);
     }
@@ -86,6 +86,41 @@ export default function Quiz() {
           return q;
         })
       );
+    } else if (
+      currentQuestion?.questionType === "short" &&
+      currentAnswer?.answer
+    ) {
+      try {
+        const response = await fetch("/api/accuracy", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            userAnswer: currentAnswer.answer,
+            correctAnswer: currentQuestion.sampleAnswer,
+          }),
+        });
+
+        // console.log(response);
+
+        if (!response.ok) throw new Error("Failed to check answer accuracy");
+        const { score } = await response.json();
+
+        // Update answer with accuracy score
+        setAnswers((prev) =>
+          prev.map((a) =>
+            a.questionId === currentQuestion.id
+              ? { ...a, score, submitted: true }
+              : a
+          )
+        );
+        setQuizState("proof");
+      } catch (error) {
+        console.error("Failed to check answer accuracy:", error);
+        // Still move to proof state even if accuracy check fails
+        setQuizState("proof");
+      }
     } else {
       setQuizState("proof");
     }
@@ -207,8 +242,55 @@ export default function Quiz() {
 
   const handleNext = () => {
     if (isLastQuestion) {
-      endQuiz();
-      router.push("/dashboard");
+      // Save all quiz attempts before ending
+      const saveAttempts = async () => {
+        try {
+          const attemptPromises = questions.map(async (question) => {
+            const answer = answers.find((a) => a.questionId === question.id);
+            if (!answer) return;
+
+            const data = {
+              question_id: parseInt(question.id),
+              date: settings.testDate.toISOString().split("T")[0],
+              attempt_count: question.attempts || 0,
+              time_taken: settings.enableTimer
+                ? (question.questionType === "mcq"
+                    ? settings.mcqTimeLimit
+                    : settings.shortAnswerTimeLimit) - (timeLeft || 0)
+                : null,
+              first_guess_score:
+                question.questionType === "mcq"
+                  ? answer.isCorrect
+                    ? 100
+                    : 0
+                  : answer.score,
+              overall_score:
+                question.questionType === "mcq"
+                  ? answer.isCorrect
+                    ? 100
+                    : 0
+                  : answer.score,
+            };
+
+            await fetch("/api/attempts", {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+              },
+              body: JSON.stringify(data),
+            });
+          });
+
+          await Promise.all(attemptPromises);
+        } catch (error) {
+          console.error("Failed to save quiz attempts:", error);
+        }
+      };
+
+      saveAttempts().then(() => {
+        endQuiz();
+        router.push("/dashboard");
+      });
     } else {
       if (timerRef.current) {
         cancelAnimationFrame(timerRef.current);
@@ -244,7 +326,7 @@ export default function Quiz() {
   useEffect(() => {
     const fetchQuestions = async () => {
       try {
-        const response = await fetch("http://localhost:9000/questions");
+        const response = await fetch("/api/questions");
         if (!response.ok) throw new Error("Failed to fetch questions");
         const data = await response.json();
         setQuestions(data);

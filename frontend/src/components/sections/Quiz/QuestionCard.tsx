@@ -119,7 +119,7 @@ export const QuestionCard: React.FC<QuestionCardProps> = ({
   const hasAnswer =
     currentAnswer?.answer && currentAnswer.answer !== "NO_ANSWER";
 
-  const minLength = 50;
+  const minLength = 10;
   const maxLength = 300;
 
   const isMCQ = question.questionType === "mcq" && "options" in question;
